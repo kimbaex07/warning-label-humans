@@ -17,17 +17,26 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def main():
-    path = os.path.join(HERE, "entry.txt")
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(ENTRY)
-    # Grading sandbox: the scorer reads /output/entry.txt, collected as
-    # another user, so the copy there must be world-readable (mode 0644).
-    out_dir = "/output"
+    # The grader mounts the repo read-only, so the next-to-script copy
+    # is best-effort only; the graded copy goes to the output dir.
+    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    wrote = []
     if os.path.isdir(out_dir):
         out_path = os.path.join(out_dir, "entry.txt")
         with open(out_path, "w", encoding="utf-8") as f:
             f.write(ENTRY)
         os.chmod(out_path, 0o644)
+        wrote.append(out_path)
+    try:
+        path = os.path.join(HERE, "entry.txt")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(ENTRY)
+        os.chmod(path, 0o644)
+        wrote.append(path)
+    except OSError:
+        pass
+    if not wrote:
+        raise SystemExit("no writable output location")
     print("Wrote %d chars: %r" % (len(ENTRY), ENTRY))
 
 
